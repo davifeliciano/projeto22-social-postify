@@ -1,26 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { PostsRepository } from './posts.repository';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+
+function handleNotFoundError(err: Error) {
+  if (err instanceof PrismaClientKnownRequestError && err.code === 'P2001') {
+    throw new NotFoundException('Page not found');
+  }
+}
 
 @Injectable()
 export class PostsService {
-  create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
+  constructor(private readonly postsRepository: PostsRepository) {}
+
+  async create(createPostDto: CreatePostDto) {
+    return await this.postsRepository.create(createPostDto);
   }
 
-  findAll() {
-    return `This action returns all posts`;
+  async findAll() {
+    return await this.postsRepository.findAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
+  async findOne(id: number) {
+    const post = await this.postsRepository.findOne(id);
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    return post;
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
+  async update(id: number, updatePostDto: UpdatePostDto) {
+    try {
+      return await this.postsRepository.update(id, updatePostDto);
+    } catch (err) {
+      handleNotFoundError(err);
+      throw err;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async remove(id: number) {
+    try {
+      return await this.postsRepository.remove(id);
+    } catch (err) {
+      handleNotFoundError(err);
+      throw err;
+    }
   }
 }

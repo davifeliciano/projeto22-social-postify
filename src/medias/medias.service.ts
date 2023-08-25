@@ -1,26 +1,68 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
+import { MediasRepository } from './medias.repository';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+
+function handleConflictError(err: Error) {
+  if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+    throw new ConflictException('Media already exists');
+  }
+}
+
+function handleNotFoundError(err: Error) {
+  if (err instanceof PrismaClientKnownRequestError && err.code === 'P2001') {
+    throw new NotFoundException('Media not found');
+  }
+}
 
 @Injectable()
 export class MediasService {
-  create(createMediaDto: CreateMediaDto) {
-    return 'This action adds a new media';
+  constructor(private readonly mediasRepository: MediasRepository) {}
+
+  async create(createMediaDto: CreateMediaDto) {
+    try {
+      return await this.mediasRepository.create(createMediaDto);
+    } catch (err) {
+      handleConflictError(err);
+      throw err;
+    }
   }
 
-  findAll() {
-    return `This action returns all medias`;
+  async findAll() {
+    return await this.mediasRepository.findAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} media`;
+  async findOne(id: number) {
+    const media = await this.mediasRepository.findOne(id);
+
+    if (!media) {
+      throw new NotFoundException('Media not found');
+    }
+
+    return media;
   }
 
-  update(id: number, updateMediaDto: UpdateMediaDto) {
-    return `This action updates a #${id} media`;
+  async update(id: number, updateMediaDto: UpdateMediaDto) {
+    try {
+      return await this.mediasRepository.update(id, updateMediaDto);
+    } catch (err) {
+      handleConflictError(err);
+      handleNotFoundError(err);
+      throw err;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} media`;
+  async remove(id: number) {
+    try {
+      return await this.mediasRepository.remove(id);
+    } catch (err) {
+      handleNotFoundError(err);
+      throw err;
+    }
   }
 }
