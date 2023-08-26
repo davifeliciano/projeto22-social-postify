@@ -6,7 +6,12 @@ import { GetQueryDto } from './dto/get-query.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 function handleNotFoundError(err: Error) {
-  if (err instanceof PrismaClientKnownRequestError && err.code === 'P2001') {
+  const errorCodes = ['P2001', 'P2025'];
+
+  if (
+    err instanceof PrismaClientKnownRequestError &&
+    errorCodes.includes(err.code)
+  ) {
     throw new NotFoundException('Page not found');
   }
 }
