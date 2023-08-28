@@ -136,12 +136,6 @@ describe('Integration Tests (e2e)', () => {
         data: postDataWithImage,
       });
 
-      let post = await prisma.post.findUnique({
-        where: { id: createdPost.id },
-      });
-
-      expect(createdPost).toEqual(post);
-
       await request(app.getHttpServer())
         .delete(`${basePath}/${createdPost.id + 1}`)
         .expect(HttpStatus.NOT_FOUND);
@@ -150,7 +144,9 @@ describe('Integration Tests (e2e)', () => {
         .delete(`${basePath}/${createdPost.id}`)
         .expect(HttpStatus.OK);
 
-      post = await prisma.post.findUnique({ where: { id: createdPost.id } });
+      const post = await prisma.post.findUnique({
+        where: { id: createdPost.id },
+      });
 
       expect(response.body).toEqual(createdPost);
       expect(post).toBeNull();

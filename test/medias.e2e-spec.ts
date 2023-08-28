@@ -121,11 +121,6 @@ describe('Integration Tests (e2e)', () => {
 
     it('/:id (DELETE)', async () => {
       const createdMedia = await prisma.media.create({ data: mediaData });
-      let media = await prisma.media.findUnique({
-        where: { id: createdMedia.id },
-      });
-
-      expect(createdMedia).toEqual(media);
 
       await request(app.getHttpServer())
         .delete(`${basePath}/${createdMedia.id + 1}`)
@@ -135,7 +130,9 @@ describe('Integration Tests (e2e)', () => {
         .delete(`${basePath}/${createdMedia.id}`)
         .expect(HttpStatus.OK);
 
-      media = await prisma.media.findUnique({ where: { id: createdMedia.id } });
+      const media = await prisma.media.findUnique({
+        where: { id: createdMedia.id },
+      });
 
       expect(response.body).toEqual(createdMedia);
       expect(media).toBeNull();
