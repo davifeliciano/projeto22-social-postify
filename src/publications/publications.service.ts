@@ -6,7 +6,7 @@ import { GetQueryDto } from './dto/get-query.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 function handleNotFoundError(err: Error) {
-  const errorCodes = ['P2001', 'P2025'];
+  const errorCodes = ['P2001', 'P2003', 'P2025'];
 
   if (
     err instanceof PrismaClientKnownRequestError &&
@@ -23,7 +23,12 @@ export class PublicationsService {
   ) {}
 
   async create(createPublicationDto: CreatePublicationDto) {
-    return await this.publicationsRepository.create(createPublicationDto);
+    try {
+      return await this.publicationsRepository.create(createPublicationDto);
+    } catch (err) {
+      handleNotFoundError(err);
+      throw err;
+    }
   }
 
   async findAll(query: GetQueryDto) {
