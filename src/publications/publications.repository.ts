@@ -13,6 +13,8 @@ export class PublicationsRepository {
   }
 
   async findAll(query: GetQueryDto) {
+    const now = new Date();
+
     return await this.prisma.publication.findMany({
       where: {
         AND: [
@@ -23,8 +25,8 @@ export class PublicationsRepository {
           },
           {
             date: {
-              lte: query.published ? new Date() : undefined,
-              gt: !query.published ? new Date() : undefined,
+              lte: query.published === true ? now : undefined,
+              gt: query.published === false ? now : undefined,
             },
           },
         ],
